@@ -53,8 +53,6 @@ def create_task():
 
     return task, 201
 
-    
-
 ################################
 #       GET ALL RESOURCES
 ################################
@@ -130,8 +128,6 @@ def delete_task(id):
 
     return deleted_task, 200
 
-
-
 ######################################   
 #   FLASK SHUTDOWN ROUTE 
 # #####################################
@@ -166,23 +162,9 @@ def completed_task(id):
 
     return completed_task,200
 
-#######################################
-#       INCOMPLETE TASK - PATCH
-#######################################
-
-"""""
-Thee functionality I need is.....
-    if /mark_complete ....do this
-    elif /mark_incomplete .... do that
-It looks like this /mark_incomplete function is overwriting previous PATCH function..
-#   
-# Debugger does not seem to be working...
-
-# how to solve? 
-#  possible solution: flask app endpoint <function name>
-#
-"""
-
+#######################################################
+#           INCOMPLETE TASK - PATCH
+#######################################################
 @tasks_bp.route("/<id>/mark_incomplete", methods=["PATCH"])
 def incomplete_task(id):
     task = validate_task_id(id)
