@@ -148,14 +148,16 @@ def shutdown():
 #                WAVE 3
 
 #####################################################
+
+#############   COMPLETE_TASK: PATCH    ################
 @tasks_bp.route("/<id>/mark_complete", methods=["PATCH"])
-def complete_a_task(id):
+def completed_task(id):
     task = validate_task_id(id)
 
-    request_body = request.get_json()
-
-    if not task.completed_at:
-        task.completed_at = datetime.utcnow()
+    #request_body = request.get_json()
+    
+    #if not task.completed_at:
+    task.completed_at = datetime.utcnow()
 
     db.session.commit()
 
@@ -163,3 +165,60 @@ def complete_a_task(id):
     completed_task["task"]["is_complete"] = True
 
     return completed_task,200
+
+#######################################
+#       INCOMPLETE TASK - PATCH
+#######################################
+
+"""""
+Thee functionality I need is.....
+    if /mark_complete ....do this
+    elif /mark_incomplete .... do that
+It looks like this /mark_incomplete function is overwriting previous PATCH function..
+#   
+# Debugger does not seem to be working...
+
+# how to solve? 
+#  possible solution: flask app endpoint <function name>
+#
+"""
+
+@tasks_bp.route("/<id>/mark_incomplete", methods=["PATCH"])
+def incomplete_task(id):
+    task = validate_task_id(id)
+
+    # request_body = request.get_json()
+    
+    # if task.completed_at:
+    task.completed_at = None
+
+    db.session.commit()
+
+    incomplete_task={"task":task.to_dict()}
+    incomplete_task["task"]["is_complete"] = False
+
+    return incomplete_task,200
+
+##################################
+#       General error handling
+###################################
+#@app.errorhandler(404)
+# def not_found_error(error):
+#     return render_template('404.html', pic=pic), 404
+
+# @app.errorhandler(400)
+# def bad_request():
+#     """Bad request."""
+#     return make_response(
+#         render_template("400.html"),
+#         400
+#     )
+
+
+# @app.errorhandler(500)
+# def server_error():
+#     """Internal server error."""
+#     return make_response(
+#         render_template("500.html"),
+#         500
+#     )
