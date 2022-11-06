@@ -3,6 +3,7 @@ from app import db
 from app.models.task import Task
 from flask import Blueprint, jsonify, abort, make_response, request
 from sqlalchemy import desc
+from datetime import datetime
 
 tasks_bp = Blueprint("tasks_bp", __name__, url_prefix="/tasks")
 
@@ -131,7 +132,9 @@ def delete_task(id):
 
 
 
-#################   FLASK SHUTDOWN ROUTE ########
+######################################   
+#   FLASK SHUTDOWN ROUTE 
+# #####################################
 @tasks_bp.route("/shutdown", methods=['GET'])
 def shutdown():
     shutdown_func = request.environ.get('werkzeug.server.shutdown')
@@ -140,3 +143,23 @@ def shutdown():
     shutdown_func()
     return "Shutting down..."
 
+####################################################
+
+#                WAVE 3
+
+#####################################################
+@tasks_bp.route("/<id>/mark_complete", methods=["PATCH"])
+def complete_a_task(id):
+    task = validate_task_id(id)
+
+    request_body = request.get_json()
+
+    if not task.completed_at:
+        task.completed_at = datetime.utcnow()
+
+    db.session.commit()
+
+    completed_task={"task":task.to_dict()}
+    completed_task["task"]["is_complete"] = True
+
+    return completed_task,200
