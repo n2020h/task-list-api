@@ -130,7 +130,7 @@ def delete_task(id):
     title=str(task.title)
     description=str(task.description)
     #message='Task '+str(id)+" "+title+" "+description+" successfully deleted"
-    message=f"Task {id} {title}{task.description} was successfully deleted"
+    message=f'Task {id} {title} successfully deleted'
     deleted_task={}
     deleted_task["details"]=message
 
