@@ -2,6 +2,7 @@ from flask import Blueprint
 from app import db
 from app.models.task import Task
 from flask import Blueprint, jsonify, abort, make_response, request
+from sqlalchemy import desc
 
 tasks_bp = Blueprint("tasks_bp", __name__, url_prefix="/tasks")
 
@@ -57,13 +58,6 @@ def create_task():
     task={"task":new_task.to_dict()}
 
     return task, 201
-    # return make_response(
-    #         {
-    #             "id": new_task["id"],
-    #             "title": request_body["title"],
-    #             "description": request_body["description"],
-    #             "is_complete": False
-    #         }, 201)
 
     
 
@@ -73,13 +67,15 @@ def create_task():
 @tasks_bp.route("", methods=["GET"])
 def read_all_tasks():
     
-    title_query = request.args.get("title")
-    if title_query:
-        tasks = Task.query.filter_by(title=title_query)
+    if request.args.get("sort")=='asc':
+        tasks = Task.query.order_by(Task.title).all()
+    elif request.args.get("sort")=='desc':
+        tasks = Task.query.order_by(desc(Task.title)).all()
     else:
         tasks = Task.query.all()
 
     tasks_response = []  #returns empty list if no tasks
+
     for task in tasks:
         tasks_response.append(
             {
@@ -89,7 +85,7 @@ def read_all_tasks():
                 "is_complete": False
             }
         )
-    return jsonify(tasks_response)
+    return jsonify(tasks_response), 200
 
 ########################################
 #       Get One Task: One Saved Task
@@ -150,4 +146,4 @@ def shutdown():
         raise RuntimeError('Not running werkzeug')
     shutdown_func()
     return "Shutting down..."
-   
+
