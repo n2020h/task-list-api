@@ -29,18 +29,11 @@ def validate_task_id(id):
 # ##############################################
 def validate_request(request_body):
     try:
-        # test data is data_dict = {'description': 'Test Description'}
-        return request_body
+        if request_body['title'] and request_body['description']:
+            return request_body
     except KeyError as error:
-        invalid_data={}
-        invalid_data['details']="Invalid data"
-        return invalid_data, 400
+        abort(make_response({"details":"Invalid data"}, 400))
 
-    #The test is failing and returning a KeyError, why wouldn't the except statement catch that
-
-        print(f"An exception occurred. Here are the error details: {error}")
-
-    
 ######################  WAVE 1, PART 1: CRUD ######################
 
 #########################################
