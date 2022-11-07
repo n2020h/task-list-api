@@ -145,29 +145,32 @@ def shutdown():
 ############################################
 #               WAVE 4
 #############################################
-from flask import render_template
-import urllib.request, json
+# from flask import render_template
+# import urllib.request, json
 import os
 from pathlib import Path
 import requests
 
-def post_message_to_slack(text):
+def post_message_to_slack(task_title):
+    
     path = "https://slack.com/api/chat.postMessage"
 
-    slack_token ='xoxb-4342805196785-4342882154817-ftj28qXzv1vXlj2dVLrjGllL'
-    slack_channel = 'task-notifications' # could be #task-notifications
+    slack_token = os.environ.get("SLACK_TOKEN")
+    slack_channel = 'task-notifications' 
+    text = f"Someone just completed the task {task_title}"
 
     query_params = {
         "token": slack_token,
         "channel": slack_channel,
         "text": text
     }
+    
     r = requests.post(path, query_params)
 
 
 ####################################################
 
-#                WAVE 3
+#                WAVE 3  - PATCH
 
 #####################################################
 
@@ -190,7 +193,7 @@ def completed_task(id):
     #set text=completed_task["task"]['title']
 
     #alt call to post_message_to_slack("You passed Wave 4", blocks = None)
-    post_message_to_slack("You passed Wave 4")
+    post_message_to_slack(completed_task["task"]['title'])
 
     return completed_task,200
 
