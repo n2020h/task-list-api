@@ -1,10 +1,13 @@
-from flask import Blueprint
+
+
 from app import db
 from app.models.task import Task
 from flask import Blueprint, jsonify, abort, make_response, request
 from sqlalchemy import desc
 from datetime import datetime
+from dotenv import load_dotenv
 
+load_dotenv()
 tasks_bp = Blueprint("tasks_bp", __name__, url_prefix="/tasks")
 
 ##################################################     
@@ -139,6 +142,29 @@ def shutdown():
     shutdown_func()
     return "Shutting down..."
 
+############################################
+#               WAVE 4
+#############################################
+from flask import render_template
+import urllib.request, json
+import os
+from pathlib import Path
+import requests
+
+def post_message_to_slack(text):
+    path = "https://slack.com/api/chat.postMessage"
+
+    slack_token ='xoxb-4342805196785-4342882154817-ftj28qXzv1vXlj2dVLrjGllL'
+    slack_channel = 'task-notifications' # could be #task-notifications
+
+    query_params = {
+        "token": slack_token,
+        "channel": slack_channel,
+        "text": text
+    }
+    r = requests.post(path, query_params)
+
+
 ####################################################
 
 #                WAVE 3
@@ -160,7 +186,19 @@ def completed_task(id):
     completed_task={"task":task.to_dict()}
     completed_task["task"]["is_complete"] = True
 
+    #add rest of message after this works
+    #set text=completed_task["task"]['title']
+
+    #alt call to post_message_to_slack("You passed Wave 4", blocks = None)
+    post_message_to_slack("You passed Wave 4")
+
     return completed_task,200
+
+    ##sample code from FLASK docs
+    
+
+    # slack token saved in .env SLACK_TOKEN
+
 
 #######################################################
 #           INCOMPLETE TASK - PATCH
@@ -180,6 +218,7 @@ def incomplete_task(id):
     incomplete_task["task"]["is_complete"] = False
 
     return incomplete_task,200
+
 
 ##################################
 #       General error handling
