@@ -1,10 +1,13 @@
-from flask import Blueprint
+
+
 from app import db
 from app.models.task import Task
 from flask import Blueprint, jsonify, abort, make_response, request
 from sqlalchemy import desc
 from datetime import datetime
+from dotenv import load_dotenv
 
+load_dotenv()
 tasks_bp = Blueprint("tasks_bp", __name__, url_prefix="/tasks")
 
 ##################################################     
@@ -52,8 +55,6 @@ def create_task():
     task={"task":new_task.to_dict()}
 
     return task, 201
-
-    
 
 ################################
 #       GET ALL RESOURCES
@@ -130,8 +131,6 @@ def delete_task(id):
 
     return deleted_task, 200
 
-
-
 ######################################   
 #   FLASK SHUTDOWN ROUTE 
 # #####################################
@@ -143,23 +142,107 @@ def shutdown():
     shutdown_func()
     return "Shutting down..."
 
+############################################
+#               WAVE 4
+#############################################
+# from flask import render_template
+# import urllib.request, json
+import os
+from pathlib import Path
+import requests
+
+def post_message_to_slack(task_title):
+    
+    path = "https://slack.com/api/chat.postMessage"
+
+    slack_token = os.environ.get("SLACK_TOKEN")
+    slack_channel = 'task-notifications' 
+    text = f"Someone just completed the task {task_title}"
+
+    query_params = {
+        "token": slack_token,
+        "channel": slack_channel,
+        "text": text
+    }
+    
+    r = requests.post(path, query_params)
+
+
 ####################################################
 
-#                WAVE 3
+#                WAVE 3  - PATCH
 
 #####################################################
+
+#############   COMPLETE_TASK: PATCH    ################
 @tasks_bp.route("/<id>/mark_complete", methods=["PATCH"])
-def complete_a_task(id):
+def completed_task(id):
     task = validate_task_id(id)
 
-    request_body = request.get_json()
-
-    if not task.completed_at:
-        task.completed_at = datetime.utcnow()
+    #request_body = request.get_json()
+    
+    #if not task.completed_at:
+    task.completed_at = datetime.utcnow()
 
     db.session.commit()
 
     completed_task={"task":task.to_dict()}
     completed_task["task"]["is_complete"] = True
 
+    #add rest of message after this works
+    #set text=completed_task["task"]['title']
+
+    #alt call to post_message_to_slack("You passed Wave 4", blocks = None)
+    post_message_to_slack(completed_task["task"]['title'])
+
     return completed_task,200
+
+    ##sample code from FLASK docs
+    
+
+    # slack token saved in .env SLACK_TOKEN
+
+
+#######################################################
+#           INCOMPLETE TASK - PATCH
+#######################################################
+@tasks_bp.route("/<id>/mark_incomplete", methods=["PATCH"])
+def incomplete_task(id):
+    task = validate_task_id(id)
+
+    # request_body = request.get_json()
+    
+    # if task.completed_at:
+    task.completed_at = None
+
+    db.session.commit()
+
+    incomplete_task={"task":task.to_dict()}
+    incomplete_task["task"]["is_complete"] = False
+
+    return incomplete_task,200
+
+
+##################################
+#       General error handling
+###################################
+#@app.errorhandler(404)
+# def not_found_error(error):
+#     return render_template('404.html', pic=pic), 404
+
+# @app.errorhandler(400)
+# def bad_request():
+#     """Bad request."""
+#     return make_response(
+#         render_template("400.html"),
+#         400
+#     )
+
+
+# @app.errorhandler(500)
+# def server_error():
+#     """Internal server error."""
+#     return make_response(
+#         render_template("500.html"),
+#         500
+#     )
