@@ -13,7 +13,7 @@ tasks_bp = Blueprint("tasks_bp", __name__, url_prefix="/tasks")
 goals_bp = Blueprint("goals_bp", __name__, url_prefix="/goals")
 
 ##################################################     
-#           WAVE 1, part 2: VALIDATE TASK ID  
+#           VALIDATE MODEL ID  
 ##################################################
 
 def validate_model_id(cls, model_id):
@@ -290,22 +290,16 @@ def create_goal():
 @goals_bp.route("", methods=["GET"])
 def read_all_goals():
     
-    if request.args.get("sort")=='asc':
-        goals = Goal.query.order_by(Goal.title).all()
-    elif request.args.get("sort")=='desc':
-        goals = Goal.query.order_by(desc(Goal.title)).all()
-    else:
-        goals = Goal.query.all()
+    goals = Goal.query.all()
 
     goals_response = []  #returns empty list if no goals
 
     for goal in goals:
-        goals_response.append(
-            {
-                "id": Goal.goal_id,
-                "title": Goal.title,
-            }
-        )
+        goals_response.append({
+                "id": goal.goal_id,
+                "title": goal.title,
+            })
+
     return jsonify(goals_response), 200
 
 #######################################
@@ -319,8 +313,37 @@ def get_one_goal(id):
 
     return saved_goal,200
 
-def update_goal():
-    pass
+##################################
+#       Update Goal 
+# ################################
+@goals_bp.route("/<id>", methods=["PUT"])
+def update_goal(id):
+    goal = validate_model_id(Goal, id)
 
-def delete_goal():
-    pass
+    request_body = request.get_json()
+
+    goal.title = request_body["title"]
+
+    db.session.commit()
+
+    updated_goal={"goal":goal.to_dict()}
+
+    return updated_goal,200    
+
+##################################
+#       Update Goal 
+# ################################
+
+@goals_bp.route("/<id>", methods=["DELETE"])
+def delete_goal(id):
+    goal = validate_model_id(Goal, id)
+    title=str(goal.title)
+    message=f'Goal {id} "{title}" successfully deleted'
+    deleted_goal={}
+    deleted_goal["details"]=message
+
+    db.session.delete(goal)
+    db.session.commit()
+
+
+    return deleted_goal, 200
