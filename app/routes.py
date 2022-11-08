@@ -311,7 +311,7 @@ def get_one_goal(id):
     goal = validate_model_id(Goal, id)
     saved_goal={"goal":goal.to_dict()}
 
-    return saved_goal,200
+    return saved_goal
 
 ##################################
 #       Update Goal 
@@ -331,19 +331,13 @@ def update_goal(id):
     return updated_goal,200    
 
 ##################################
-#       Update Goal 
+#       DELETE Goal 
 # ################################
 
 @goals_bp.route("/<id>", methods=["DELETE"])
 def delete_goal(id):
     goal = validate_model_id(Goal, id)
-    title=str(goal.title)
-    message=f'Goal {id} "{title}" successfully deleted'
-    deleted_goal={}
-    deleted_goal["details"]=message
-
     db.session.delete(goal)
     db.session.commit()
-
-
+    deleted_goal = {"details":f'Goal {id} \"{str(goal.title)}\" successfully deleted'} 
     return deleted_goal, 200
