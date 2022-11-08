@@ -2,6 +2,7 @@
 
 from app import db
 from app.models.task import Task
+from app.models.goal import Goal
 from flask import Blueprint, jsonify, abort, make_response, request
 from sqlalchemy import desc
 from datetime import datetime
@@ -9,29 +10,30 @@ from dotenv import load_dotenv
 
 load_dotenv()
 tasks_bp = Blueprint("tasks_bp", __name__, url_prefix="/tasks")
+goals_bp = Blueprint("goals_bp", __name__, url_prefix="/goals")
 
 ##################################################     
 #           WAVE 1, part 2: VALIDATE TASK ID  
 ##################################################
-def validate_task_id(id):
-    #confirm id is type int
+
+def validate_model_id(cls, model_id):
     try:
-        id= int(id)
+        model_id = int(model_id)
     except:
-        abort(make_response({"message":f"task {id} invalid"}, 400))
+        abort(make_response({"message":f"{cls.__name__} {model_id} invalid"}, 400))
 
-    task = Task.query.get(id)
+    model = cls.query.get(model_id)
 
-    #confirm id is in db
-    if not task:
-        abort(make_response({"message":f"task {id} not found"}, 404))
+    if not model:
+        class_name=cls.__name__.lower()
+        abort(make_response({"message":f"{class_name} {model_id} not found"}, 404))
 
-    return task
+    return model
     
 ################################################ 
 #       WAVE 1, part 3: VALIDATE INPUT REQUESTS  
 # ##############################################
-def validate_request(request_body):
+def validate_task(request_body):
     try:
         if request_body['title'] and request_body['description']:
             return request_body
@@ -46,8 +48,8 @@ def validate_request(request_body):
 @tasks_bp.route("", methods=["POST"])
 def create_task():
     request_body = request.get_json()
-    #the next line would create dependency with VALIDATE_REQUEST function
-    new_task = validate_request(request_body)
+    #the next line would create dependency with validate_task function
+    new_task = validate_task(request_body)
     new_task = Task.from_dict(request_body)
     db.session.add(new_task)
     db.session.commit()
@@ -87,7 +89,7 @@ def read_all_tasks():
 ########################################
 @tasks_bp.route("/<id>", methods=["GET"])
 def read_one_task(id):
-    task = validate_task_id(id)
+    task = validate_model_id(Task, id)
     saved_task={"task":task.to_dict()}
 
     return saved_task,200
@@ -98,7 +100,7 @@ def read_one_task(id):
 # ################################
 @tasks_bp.route("/<id>", methods=["PUT"])
 def update_task(id):
-    task = validate_task_id(id)
+    task = validate_model_id(Task, id)
 
     request_body = request.get_json()
 
@@ -117,7 +119,7 @@ def update_task(id):
 #######################################
 @tasks_bp.route("/<id>", methods=["DELETE"])
 def delete_task(id):
-    task = validate_task_id(id)
+    task = validate_model_id(Task, id)
     title=str(task.title)
     description=str(task.description)
     #message='Task '+str(id)+" "+title+" "+description+" successfully deleted"
@@ -167,6 +169,10 @@ def post_message_to_slack(task_title):
     
     r = requests.post(path, query_params)
 
+    # REFACTOR?
+    # Consider using the keyword argument data, json, and/or headers
+
+
 
 ####################################################
 
@@ -177,7 +183,7 @@ def post_message_to_slack(task_title):
 #############   COMPLETE_TASK: PATCH    ################
 @tasks_bp.route("/<id>/mark_complete", methods=["PATCH"])
 def completed_task(id):
-    task = validate_task_id(id)
+    task = validate_model_id(Task, id)
 
     #request_body = request.get_json()
     
@@ -208,7 +214,7 @@ def completed_task(id):
 #######################################################
 @tasks_bp.route("/<id>/mark_incomplete", methods=["PATCH"])
 def incomplete_task(id):
-    task = validate_task_id(id)
+    task = validate_model_id(Task, id)
 
     # request_body = request.get_json()
     
@@ -223,7 +229,8 @@ def incomplete_task(id):
     return incomplete_task,200
 
 
-##################################
+
+    """##################################
 #       General error handling
 ###################################
 #@app.errorhandler(404)
@@ -232,7 +239,7 @@ def incomplete_task(id):
 
 # @app.errorhandler(400)
 # def bad_request():
-#     """Bad request."""
+#     #Bad request.#
 #     return make_response(
 #         render_template("400.html"),
 #         400
@@ -241,8 +248,79 @@ def incomplete_task(id):
 
 # @app.errorhandler(500)
 # def server_error():
-#     """Internal server error."""
+#     #Internal server error.#
 #     return make_response(
 #         render_template("500.html"),
 #         500
 #     )
+    """
+
+#################################################################
+#                        WAVE 5
+
+##########          GOALS ROUTES                    #############
+
+##################################################################
+def validate_goal(request_body):
+    try:
+        if request_body['title']:
+            return request_body
+    except KeyError:
+        abort(make_response({"details":"Invalid data"}, 400))
+
+######################################
+#       CREATE GOAL
+########################################
+@goals_bp.route("", methods=["POST"])
+def create_goal():
+    request_body = request.get_json()
+    #the next line would create dependency with validate_task function
+    new_goal = validate_goal(request_body)
+    new_goal = Goal.from_dict(request_body)
+    db.session.add(new_goal)
+    db.session.commit()
+
+    goal={"goal":new_goal.to_dict()}
+
+    return goal, 201
+
+#######################################
+#       GET GOALS
+#######################################
+@goals_bp.route("", methods=["GET"])
+def read_all_goals():
+    
+    if request.args.get("sort")=='asc':
+        goals = Goal.query.order_by(Goal.title).all()
+    elif request.args.get("sort")=='desc':
+        goals = Goal.query.order_by(desc(Goal.title)).all()
+    else:
+        goals = Goal.query.all()
+
+    goals_response = []  #returns empty list if no goals
+
+    for goal in goals:
+        goals_response.append(
+            {
+                "id": Goal.goal_id,
+                "title": Goal.title,
+            }
+        )
+    return jsonify(goals_response), 200
+
+#######################################
+#       GET ONE GOAL
+#######################################
+
+@goals_bp.route("/<id>", methods=["GET"])
+def get_one_goal(id):
+    goal = validate_model_id(Goal, id)
+    saved_goal={"goal":goal.to_dict()}
+
+    return saved_goal,200
+
+def update_goal():
+    pass
+
+def delete_goal():
+    pass
