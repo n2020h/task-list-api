@@ -23,7 +23,7 @@ def test_get_goals_one_saved_goal(client, one_goal):
     assert len(response_body) == 1
     assert response_body == [
         {
-            "id": 1,
+            "goal_id": 1,
             "title": "Build a habit of going outside daily"
         }
     ]
@@ -102,7 +102,7 @@ def test_update_goal(client, one_goal):
     assert goal.title == "Much Better Goal"
 
 
-@pytest.mark.skip(reason="test to be completed by student")
+#@pytest.mark.skip(reason="test to be completed by student")
 def test_update_goal_not_found(client):
     # Act
     response = client.put("/tasks/1", json={

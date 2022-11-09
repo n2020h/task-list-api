@@ -296,7 +296,7 @@ def read_all_goals():
 
     for goal in goals:
         goals_response.append({
-                "id": goal.goal_id,
+                "goal_id": goal.goal_id,
                 "title": goal.title,
             })
 
@@ -306,9 +306,9 @@ def read_all_goals():
 #       GET ONE GOAL
 #######################################
 
-@goals_bp.route("/<id>", methods=["GET"])
-def get_one_goal(id):
-    goal = validate_model_id(Goal, id)
+@goals_bp.route("/<goal_id>", methods=["GET"])
+def get_one_goal(goal_id):
+    goal = validate_model_id(Goal, goal_id)
     saved_goal={"goal":goal.to_dict()}
 
     return saved_goal
@@ -316,9 +316,9 @@ def get_one_goal(id):
 ##################################
 #       Update Goal 
 # ################################
-@goals_bp.route("/<id>", methods=["PUT"])
-def update_goal(id):
-    goal = validate_model_id(Goal, id)
+@goals_bp.route("/<goal_id>", methods=["PUT"])
+def update_goal(goal_id):
+    goal = validate_model_id(Goal,goal_id)
 
     request_body = request.get_json()
 
@@ -334,10 +334,63 @@ def update_goal(id):
 #       DELETE Goal 
 # ################################
 
-@goals_bp.route("/<id>", methods=["DELETE"])
-def delete_goal(id):
-    goal = validate_model_id(Goal, id)
+@goals_bp.route("/<goal_id>", methods=["DELETE"])
+def delete_goal(goal_id):
+    goal = validate_model_id(Goal,goal_id)
     db.session.delete(goal)
     db.session.commit()
-    deleted_goal = {"details":f'Goal {id} \"{str(goal.title)}\" successfully deleted'} 
+    deleted_goal = {"details":f'Goal {goal_id} \"{str(goal.title)}\" successfully deleted'} 
     return deleted_goal, 200
+
+#####################################
+#         WAVE 6
+######################################
+def add_task_to_goal(goal_id, task_id):
+    pass
+
+######################################
+#               POST
+#       /GOALS/GOAL_ID/TASKS  
+#####################################
+@goals_bp.route("/<goal_id>/tasks",methods =["POST"])
+def post_tasks_to_goal(goal_id):
+    goal = validate_model_id(Goal, goal_id)
+
+    request_body = request.get_json()
+
+    new_tasks=[]
+    task_ids = request_body["task_ids"]
+    for task_id in task_ids:
+        task = validate_model_id(Task, task_id)
+        new_tasks.append(task)
+
+    goal.tasks.extend(new_tasks)
+
+    posted_tasks={"id":int(goal_id),"task_ids":task_ids} #formatting only
+
+    db.session.commit()#is there an update call?
+
+    return posted_tasks
+    
+########################################  
+#               GET 
+#        /GOALS/GOAL_ID/TASKS  
+########################################
+@goals_bp.route("/<goal_id>/tasks",methods =["GET"])
+def get_tasks_from_goal(goal_id):
+    # #goal = validate_model_id(Goal, goal_id) #take goal_id, return valid goal
+    # saved_goal={"goal":goal.to_dict} #get full dict for goal
+
+    # g_tasks=[] #list of tasks to return, will return empty list if no tasks
+
+    # # GET LIST OF TASKS FOR GOAL
+
+    # #add .tasks to to_dict in goal model?
+    # g_tasks = saved_goal.tasks #AttributeError: 'dict' object has no attribute 'tasks'
+    # g_tasks = goal.tasks #TypeError: Object of type Task is not JSON serializable
+    # #g_tasks = goal["tasks"] #TypeError: 'Goal' object is not subscriptable
+
+    # return {"tasks":g_tasks} #return in required format
+    #goal=Goal.query.get_or_404(goal_id)
+    goal=validate_model_id(Goal,goal_id)
+    return goal.to_dict(tasks=True)
