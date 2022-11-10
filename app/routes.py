@@ -5,8 +5,12 @@ from flask import Blueprint, jsonify, abort, make_response, request
 from sqlalchemy import desc
 from datetime import datetime
 from dotenv import load_dotenv
+import os
+from pathlib import Path
+import requests
 
 load_dotenv()
+
 tasks_bp = Blueprint("tasks_bp", __name__, url_prefix="/tasks")
 goals_bp = Blueprint("goals_bp", __name__, url_prefix="/goals")
 
@@ -123,7 +127,7 @@ def delete_task(id):
     return deleted_task, 200
 
 
-#   FLASK SHUTDOWN ROUTE 
+#       FLASK SHUTDOWN ROUTE 
 @tasks_bp.route("/shutdown", methods=['GET'])
 def shutdown():
     shutdown_func = request.environ.get('werkzeug.server.shutdown')
@@ -133,10 +137,6 @@ def shutdown():
     return "Shutting down..."
 
 #       POST TO SLACK
-import os
-from pathlib import Path
-import requests
-
 def post_message_to_slack(task_title):
     
     path = "https://slack.com/api/chat.postMessage"
